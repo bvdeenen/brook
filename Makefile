@@ -5,9 +5,9 @@ AR=msp430-ar
 CFLAGS= -std=gnu99 -W -Os -g -mmcu=msp430f149 -pedantic -Wall -Wunused
 
 OBJ_FILES=\
-	easyWEB.o
+	main.o
 
-TARGET=easyWEB
+TARGET=main
 all: ${TARGET}.elf
 
 ${TARGET}.elf : ${OBJ_FILES}	 Makefile
@@ -21,5 +21,5 @@ clean:
 	-rm *.elf
 	-rm *.o
 
-easyWEB.o: easyWEB.c
+main.o: main.c
 
