@@ -60,8 +60,12 @@ interrupt(TIMER0_A1_VECTOR)  taccr1_isr(void)
 interrupt(TIMER0_A0_VECTOR)  taccr0_isr(void)
 {
 	P1OUT ^= BIT0 ;
-	if ( ++duty_cycle > period) 
-			duty_cycle=0;
+	if ( ++duty_cycle > period) {
+			
+		P6OUT &= ~1;
+		duty_cycle=0;
+		P6OUT |= 1;
+	}
   TACCR2 = duty_cycle;
 
 }
@@ -204,6 +208,7 @@ void InitOsc(void)
 	  P6SEL = 0x80;                                  
 	  P6OUT = 0;
 	  P6DIR = 0x00;                                  // all output
+	  P6DIR |= BIT0;
 	}
 
 	void Delay (unsigned int a)
