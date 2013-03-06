@@ -10,9 +10,13 @@ OBJ_FILES=\
 TARGET=main
 all: ${TARGET}.elf
 
+# the math library will NOT be included unless -lm is the last argument
 ${TARGET}.elf : ${OBJ_FILES}	 Makefile
-	${CC} ${CFLAGS} -I${INCLUDE}  ${OBJ_FILES} \
-	-o $@
+	${CC}  ${CFLAGS} -I${INCLUDE}  ${OBJ_FILES} \
+	-o $@ -lm
+
+%.s: %.c Makefile
+	${CC} ${CFLAGS} -I ${INCLUDE} -S $<
 
 install: ${TARGET}.elf
 	mspdebug -j olimex "prog $<"

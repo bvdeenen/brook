@@ -1,72 +1,26 @@
-#include <msp430x14x.h>
-#include <msp430.h>
-#include <legacymsp430.h>
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
 
-extern const unsigned char WebSide[] ;
-#define bitset(var,bitno) ((var) |= 1 << (bitno))
-#define bitclr(var,bitno) ((var) &= ~(1 << (bitno)))
-
-#define          B1                 BIT4&P4IN         //B1 - P4.4
-#define          B2                 BIT5&P4IN         //B2 - P4.5
-#define          B3                 BIT6&P4IN         //B3 - P4.6
-#define          B4                 BIT7&P4IN         //B4 - P4.7
-#define          LCD_Data           P2OUT          
-#define          _100us             66                //66 cycles *12 + 9 = 801 / 801*125ns = 100us
-#define          _10us              6                 //6 cycles * 12 + 9 = 81 / 81*125ns=10us
-#define          E                  3                 //P2.3
-#define          RS                 2                 //P2.2
-#define          CR                 0x0d
-#define          LF                 0x0a
-#define          BUTTON_TIME        100
-
-#define		DISP_ON			0x0c	        //LCD control constants
-#define		DISP_OFF		0x08	        //
-#define		CLR_DISP		0x01    	//
-#define		CUR_HOME		0x02	        //
-#define		ENTRY_INC		0x06            //
-#define		DD_RAM_ADDR		0x80	        //
-#define		DD_RAM_ADDR2		0xc0	        //
-#define		DD_RAM_ADDR3		0x28	        //
-#define		CG_RAM_ADDR		0x40	        //
+#include "main.h"
 
 
-unsigned char TXData, RXData,i,j,k,temp,RX_flag,cntr,time_out;
+#define SIN_LEN 128
+unsigned char sin_table[SIN_LEN];
 
-#define pwm_freq 40000
-int duty_cycle = 10;
-int period = ( (unsigned int)( 4e6/pwm_freq));
-void Delay (unsigned int a);
-void Delayx100us(unsigned char b);
-void SEND_CHAR (unsigned char c);
-void SEND_CMD (unsigned char e);
-void InitLCD(void);
-void show_status() ;
-void InitOsc();
-void InitLCD();
-void InitPorts();
+unsigned char RXData,i,j,k,temp,cntr,time_out;
+#define f_aclk 4000
+#define pwm_freq 80
+unsigned char duty_cycle = 10;
+unsigned char period = ( (unsigned int)( f_aclk/pwm_freq));
 
-//interrupt(TIMERA1_VECTOR)  taccr0_handler(void)
-//enable with IE1 |= WDTIE;
-interrupt(WDT_VECTOR)  wdt_isr(void)
-{
-}
-
-interrupt(TIMER0_A1_VECTOR)  taccr1_isr(void)
-{
-}
 interrupt(TIMER0_A0_VECTOR)  taccr0_isr(void)
 {
 	P1OUT ^= BIT0 ;
-	if ( ++duty_cycle > period) {
-			
-		P6OUT &= ~1;
-		duty_cycle=0;
-		P6OUT |= 1;
+
+	if( duty_cycle-- == 0){
+		duty_cycle=SIN_LEN;
+		P6OUT ^= BIT0;
 	}
-  TACCR2 = duty_cycle;
+
+	TACCR2 = sin_table[duty_cycle];
 
 }
 
@@ -77,48 +31,13 @@ int main(void)
 	InitPorts();           
 	InitLCD();
 	Delayx100us(10);
+	InitSin();
 	show_status();
 	eint();
 
 
 	while (1)                                      // repeat forever
 	{
-	//P1OUT ^= BIT0 ;
-
-		//--------------buttons scan---------------------------------------------------------
-
-		if ((B1) == 0)                                 //B1 is pressed
-		{
-			period++;
-			TACCR0 = period;
-			Delayx100us(100);
-			show_status();
-
-		}
-		if ((B4) == 0)                                 //B1 is pressed
-		{
-			period--;
-			TACCR0 = period;
-			Delayx100us(100);
-			show_status();
-
-		}
-
-		if ((B2) == 0)
-		{      
-			duty_cycle++;
-			  TACCR2 = duty_cycle;
-			Delayx100us(100);
-			show_status();
-		}
-
-		if ((B3) == 0)   
-		{
-			duty_cycle--;
-			  TACCR2 = duty_cycle;
-			Delayx100us(100);
-			show_status();
-		}
 
 	}                               
 	return 0;
@@ -146,7 +65,7 @@ void show_status() {
 	print_int(period);
 	SEND_CHAR(' ');
 	print_int( pwm_freq);
-	print_string("Hz");
+	print_string("kHz");
 }
 
 // enables the 8MHz crystal on XT1 and use
@@ -285,4 +204,12 @@ void InitOsc(void)
 		SEND_CMD(CLR_DISP);   
 	}
 
+void InitSin(void) {
+	unsigned char i; float v; float pi=3.1415;
+	float x=0;
+	for(i=0;i<SIN_LEN;i++, x += 2*pi/SIN_LEN ) {
+		v = sinf(x);
+		sin_table[i] = (unsigned char)(period/2+(period/2)*v);
+	}
+}
 
