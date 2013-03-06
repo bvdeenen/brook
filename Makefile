@@ -5,7 +5,10 @@ AR=msp430-ar
 CFLAGS= -std=gnu99 -W -Os -g -mmcu=msp430f149 -pedantic -Wall -Wunused
 
 OBJ_FILES=\
-	main.o
+	main.o utils.o
+
+.PHONY: indent
+
 
 TARGET=main
 all: ${TARGET}.elf
@@ -20,10 +23,13 @@ ${TARGET}.elf : ${OBJ_FILES}	 Makefile
 
 install: ${TARGET}.elf
 	mspdebug -j olimex "prog $<"
-
+indent:
+	indent -v *.[ch]
 clean:
 	-rm *.elf
 	-rm *.o
+	-rm *~
+	-rm main.s
 
 main.o: main.c
 
