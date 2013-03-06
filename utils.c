@@ -75,3 +75,19 @@ void InitLCD(void)
 	SEND_CMD(CLR_DISP);
 }
 
+void print_string(char *s)
+{
+	for (i = 0; i != 32 && s[i] != 0; i++) {
+		SEND_CHAR(s[i]);
+		if (i == 15)
+			SEND_CMD(DD_RAM_ADDR2);
+	}
+}
+
+void print_int(unsigned int i)
+{
+	char buffer[10];
+	ltoa(i, buffer, 10);
+	print_string(buffer);
+}
+

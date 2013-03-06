@@ -1,6 +1,6 @@
 tags
-main.elf
-main.s
-main.o
+*.elf
+*.s
+*.o
 Session.vim
 *~

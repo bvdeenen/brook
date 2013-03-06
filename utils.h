@@ -2,6 +2,7 @@
 #define __UTILS_H__
 
 #include <msp430x14x.h>
+#include <stdint.h>
 #include <msp430.h>
 #include <legacymsp430.h>
 #include <math.h>
@@ -10,6 +11,7 @@
 #include <string.h>
 #define bitset(var,bitno) ((var) |= 1 << (bitno))
 #define bitclr(var,bitno) ((var) &= ~(1 << (bitno)))
+#define bittoggle(var,bitno) ((var) ^= (1 << (bitno)))
 
 #define          B1                 BIT4&P4IN	//B1 - P4.4
 #define          B2                 BIT5&P4IN	//B2 - P4.5
@@ -39,5 +41,7 @@ void Delayx100us(unsigned char b);
 void SEND_CHAR(unsigned char c);
 void SEND_CMD(unsigned char e);
 void InitLCD(void);
+void print_string(char *s);
+void print_int(unsigned int i);
 
 #endif
