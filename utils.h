@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+typedef signed char                             bool;
+
 #define bitset(var,bitno) ((var) |= 1 << (bitno))
 #define bitclr(var,bitno) ((var) &= ~(1 << (bitno)))
 #define bittoggle(var,bitno) ((var) ^= (1 << (bitno)))

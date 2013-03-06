@@ -3,30 +3,30 @@
 #include "utils.h"
 
 #define SIN_LEN 128
-#define f_aclk 4000
-#define pwm_freq 80
-#define sample_freq 20
-#define update_ct  ((unsigned char)(pwm_freq/sample_freq))
+#define F_ACLK 8000
+#define F_PWM 80
+#define F_SAMPLE 20
+#define update_ct  ((uint8_t)(F_PWM/F_SAMPLE))
 
 uint8_t sin_table[SIN_LEN];
-uint8_t RXData, i, j, k, temp, cntr, time_out;
-int8_t duty_cycle = SIN_LEN-1;
+uint8_t i;
+uint8_t duty_cycle = SIN_LEN-1;
 uint8_t update_index = update_ct;
-const uint8_t k_period = ((unsigned char)(f_aclk / pwm_freq));
+const uint8_t k_period = ((unsigned char)(F_ACLK / F_PWM));
 
-interrupt(TIMER0_A0_VECTOR) wakeup taccr0_isr(void)
+
+interrupt(TIMER0_A0_VECTOR) taccr0_isr(void)
 {
 	bittoggle(P1OUT, 0);
-	TACCR2 = sin_table[(uint8_t)duty_cycle];
-	update_index--;
-	if ( update_index )
-		return;
-	update_index = update_ct;
+	TACCR2 = sin_table[duty_cycle];
+	if ( --update_index == 0){
+		update_index = update_ct;
+		LPM0_EXIT;
+	}
 }
 
 int main(void)
 {
-
 	InitOsc();
 	InitPorts();
 	InitLCD();
@@ -37,16 +37,15 @@ int main(void)
 
 	while (1)		// repeat forever
 	{
-		_BIS_SR(CPUOFF);
+		LPM0;
+
+		// called once every update_ct interrupts (F_PWM)
 		bittoggle(P6OUT,1);
-
-
 		duty_cycle -=8;
-		if (duty_cycle < 0) {
+		if (duty_cycle & 128) {
 			duty_cycle = SIN_LEN-1;
 			bittoggle(P6OUT,0);
 		}
-
 	}
 	return 0;
 }
@@ -60,7 +59,7 @@ void show_status()
 	print_string("per:");
 	print_int(k_period);
 	SEND_CHAR(' ');
-	print_int(pwm_freq);
+	print_int(F_PWM);
 	print_string("kHz");
 }
 
@@ -78,7 +77,7 @@ void InitOsc(void)
 		IFG1 &= ~OFIFG;
 	while (IFG1 & OFIFG);
 
-	BCSCTL1 |= DIVA0;	// ACLK = XT1 / 2 = 4MHz.
+	BCSCTL1 &= ~DIVA0; // XT1 = 8 MHz.
 	BCSCTL1 &= ~DIVA1;
 
 	IE1 &= ~WDTIE;		// disable WDT int.
