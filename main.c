@@ -3,24 +3,22 @@
 #include "utils.h"
 
 #define SIN_LEN 128
-#define F_ACLK 8000
-#define F_PWM 80
-#define F_SAMPLE 20
-#define update_ct  ((uint8_t)(F_PWM/F_SAMPLE))
+#define F_ACLK 8000  /* ACLK frequency [kHz] */
+#define F_PWM 160    /* pqm frequency [kHz] */
+#define F_SAMPLE 20  /* audio sample frequency [kHz] */
+#define UPDATE_CT  ((uint8_t)(F_PWM/F_SAMPLE)) /* new audio sample once every UPDATE_CT pwm cycles */
 
 uint8_t sin_table[SIN_LEN];
-uint8_t i;
-uint8_t duty_cycle = SIN_LEN-1;
-uint8_t update_index = update_ct;
+uint8_t i, duty_cycle = SIN_LEN-1, update_index = UPDATE_CT;
 const uint8_t k_period = ((unsigned char)(F_ACLK / F_PWM));
 
 
 interrupt(TIMER0_A0_VECTOR) taccr0_isr(void)
 {
-	bittoggle(P1OUT, 0);
+	bittoggle(P1OUT, 0); /* for debugging */
 	TACCR2 = sin_table[duty_cycle];
 	if ( --update_index == 0){
-		update_index = update_ct;
+		update_index = UPDATE_CT;
 		LPM0_EXIT;
 	}
 }
@@ -39,7 +37,7 @@ int main(void)
 	{
 		LPM0;
 
-		// called once every update_ct interrupts (F_PWM)
+		// called once every UPDATE_CT interrupts (F_PWM)
 		bittoggle(P6OUT,1);
 		duty_cycle -=8;
 		if (duty_cycle & 128) {
